@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Ironnroot Fitness",
+    "slug": "ironnroot-fitness",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0B0F19",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0B0F19"
+      }
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "scheme": "ironnroot-fitness"
+  }
+}
