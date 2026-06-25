@@ -3,10 +3,11 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Layout
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { COLORS, SIZES, SPACING } from '../../constants/theme';
+import { LinearGradient } from 'expo-linear-gradient';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 import { EXERCISES, DEFAULT_TEMPLATES } from '../../constants/mockData';
-import { Search, Info, ChevronDown, ChevronUp, Plus, Flame, Dumbbell } from 'lucide-react-native';
+import { Search, Info, ChevronDown, ChevronUp, Plus, Flame, Dumbbell, Clock, ChevronRight } from 'lucide-react-native';
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -15,20 +16,83 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 const CATEGORIES = ['All', 'Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core'];
 
+const CATEGORY_COLORS: Record<string, string> = {
+  All: '#8B5CF6',
+  Chest: '#8B5CF6',      // Violet
+  Back: '#00F2FE',       // Cyan
+  Legs: '#10B981',       // Emerald
+  Shoulders: '#F59E0B',  // Amber
+  Arms: '#EC4899',       // Pink
+  Core: '#3B82F6',       // Blue
+};
+
 export default function Workouts() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'routines' | 'exercises'>('routines');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [expandedExerciseId, setExpandedExerciseId] = useState<string | null>(null);
+  
+  // Track search bar focus for premium borders
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-  const handleStartWorkout = (templateId: string) => {
-    router.push(`/active-workout?templateId=${templateId}`);
+  const handleStartWorkout = (templateId?: string) => {
+    if (templateId) {
+      router.push(`/active-workout?templateId=${templateId}`);
+    } else {
+      router.push('/active-workout');
+    }
   };
 
   const toggleExpandExercise = (id: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpandedExerciseId(expandedExerciseId === id ? null : id);
+  };
+
+  const getRoutineBorderColor = (id: string) => {
+    switch (id) {
+      case 'temp-push': return '#8B5CF6';
+      case 'temp-pull': return '#00F2FE';
+      case 'temp-legs': return '#10B981';
+      default: return COLORS.primary;
+    }
+  };
+
+  const getRoutineGradient = (id: string) => {
+    switch (id) {
+      case 'temp-push': return ['#8B5CF6', '#EC4899'] as const;
+      case 'temp-pull': return ['#00F2FE', '#4FACFE'] as const;
+      case 'temp-legs': return ['#10B981', '#059669'] as const;
+      default: return ['#8B5CF6', '#EC4899'] as const;
+    }
+  };
+
+  const getRoutineGlowColor = (id: string) => {
+    switch (id) {
+      case 'temp-push': return '#8B5CF6';
+      case 'temp-pull': return '#00F2FE';
+      case 'temp-legs': return '#10B981';
+      default: return '#8B5CF6';
+    }
+  };
+
+  const getExerciseColor = (category: string) => {
+    return CATEGORY_COLORS[category] || COLORS.primary;
+  };
+
+  const getEquipmentTagStyle = (equipment: string) => {
+    switch (equipment) {
+      case 'Barbell':
+      case 'Dumbbell':
+        return { bg: 'rgba(245, 158, 11, 0.08)', text: '#F59E0B' }; // Amber
+      case 'Bodyweight':
+        return { bg: 'rgba(16, 185, 129, 0.08)', text: '#10B981' }; // Emerald
+      case 'Cable':
+      case 'Machine':
+        return { bg: 'rgba(59, 130, 246, 0.08)', text: '#3B82F6' }; // Blue
+      default:
+        return { bg: 'rgba(255, 255, 255, 0.04)', text: COLORS.textSecondary };
+    }
   };
 
   // Filter exercises
@@ -64,49 +128,107 @@ export default function Workouts() {
         {activeTab === 'routines' ? (
           <View style={styles.routinesTab}>
             <View style={styles.titleRow}>
-              <Text style={styles.title}>Workout Templates</Text>
-              <Button
-                title="New Routine"
-                onPress={() => router.push('/active-workout')}
-                size="sm"
-                variant="outline"
-                icon={<Plus size={14} color={COLORS.primary} />}
-              />
+              <Text style={styles.title}>Workout Routines</Text>
             </View>
             <Text style={styles.subtitle}>Select a routine to start tracking your session.</Text>
 
-            {DEFAULT_TEMPLATES.map((t) => (
-              <Card key={t.id} style={styles.routineCard}>
-                <View style={styles.routineInfo}>
-                  <Text style={styles.routineName}>{t.name}</Text>
-                  <View style={styles.tagRow}>
-                    <View style={styles.tag}>
-                      <Text style={styles.tagText}>{t.durationMin} mins</Text>
+            {/* Create Custom Routine Card with Gradient Border Wrapper */}
+            <View style={styles.createCardWrapper}>
+              <LinearGradient
+                colors={['#8B5CF6', '#EC4899']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.createCardGradient}
+              >
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => handleStartWorkout()}
+                  style={styles.createCardInner}
+                >
+                  <View style={styles.createCardContent}>
+                    <View style={styles.createIconContainer}>
+                      <Plus size={20} color={COLORS.accentPink} />
                     </View>
-                    <View style={styles.tag}>
-                      <Text style={styles.tagText}>{t.exercisesCount} Exercises</Text>
+                    <View style={styles.createTextContainer}>
+                      <Text style={styles.createCardTitle}>Create Custom Workout</Text>
+                      <Text style={styles.createCardDesc}>Start an empty routine and add exercises on the fly</Text>
                     </View>
-                    {t.lastPerformed && (
-                      <Text style={styles.lastPerformedText}>
-                        Last: {t.lastPerformed}
-                      </Text>
-                    )}
+                    <ChevronRight size={18} color={COLORS.textSecondary} />
                   </View>
-                </View>
-                <View style={styles.routineDivider} />
-                <View style={styles.routineExercisesPreview}>
-                  <Text style={styles.previewTitle}>Exercises:</Text>
-                  <Text style={styles.previewList} numberOfLines={1}>
-                    {t.exercises.map(e => e.exerciseName).join(', ')}
-                  </Text>
-                </View>
-                <Button
-                  title="Start Routine"
-                  onPress={() => handleStartWorkout(t.id)}
-                  style={styles.startBtn}
-                />
-              </Card>
-            ))}
+                </TouchableOpacity>
+              </LinearGradient>
+            </View>
+
+            {DEFAULT_TEMPLATES.map((t) => {
+              const borderThemeColor = getRoutineBorderColor(t.id);
+              const glowColor = getRoutineGlowColor(t.id);
+              return (
+                <Card 
+                  key={t.id} 
+                  style={[
+                    styles.routineCard, 
+                    { 
+                      borderLeftWidth: 4, 
+                      borderLeftColor: borderThemeColor,
+                      shadowColor: glowColor,
+                      shadowOpacity: 0.15,
+                      shadowRadius: 8,
+                      shadowOffset: { width: 0, height: 4 },
+                    }
+                  ]}
+                >
+                  <View style={styles.routineInfo}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={styles.routineName}>{t.name}</Text>
+                      <ChevronRight size={16} color={COLORS.textMuted} />
+                    </View>
+                    <View style={styles.tagRow}>
+                      <View style={[styles.tag, { backgroundColor: `${borderThemeColor}10` }]}>
+                        <Clock size={10} color={borderThemeColor} style={{ marginRight: 4 }} />
+                        <Text style={[styles.tagText, { color: borderThemeColor }]}>{t.durationMin} mins</Text>
+                      </View>
+                      <View style={[styles.tag, { backgroundColor: `${borderThemeColor}10` }]}>
+                        <Dumbbell size={10} color={borderThemeColor} style={{ marginRight: 4 }} />
+                        <Text style={[styles.tagText, { color: borderThemeColor }]}>{t.exercisesCount} Exercises</Text>
+                      </View>
+                      {t.lastPerformed && (
+                        <Text style={styles.lastPerformedText}>
+                          Last: {t.lastPerformed}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                  <View style={styles.routineDivider} />
+                  <View style={styles.routineExercisesPreview}>
+                    <Text style={styles.previewTitle}>Exercises In Routine:</Text>
+                    {t.exercises.map((e, idx) => (
+                      <View key={idx} style={styles.previewExerciseRow}>
+                        <Dumbbell size={12} color={borderThemeColor} style={{ marginRight: 8, opacity: 0.8 }} />
+                        <Text style={styles.previewExerciseText}>{e.exerciseName}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => handleStartWorkout(t.id)}
+                    activeOpacity={0.8}
+                    style={[
+                      styles.startBtnContainer,
+                      { shadowColor: glowColor }
+                    ]}
+                  >
+                    <LinearGradient
+                      colors={getRoutineGradient(t.id)}
+                      style={styles.startBtnGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                    >
+                      <Flame size={14} color={COLORS.white} style={{ marginRight: 6 }} />
+                      <Text style={styles.startBtnText}>Start Routine</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </Card>
+              );
+            })}
           </View>
         ) : (
           <View style={styles.exercisesTab}>
@@ -114,31 +236,53 @@ export default function Workouts() {
             <Text style={styles.subtitle}>Browse form guides and list details for various workouts.</Text>
 
             {/* Search Bar */}
-            <View style={styles.searchBar}>
-              <Search size={18} color={COLORS.textSecondary} style={styles.searchIcon} />
+            <View style={[styles.searchBar, isSearchFocused && styles.searchBarFocused]}>
+              <Search size={18} color={isSearchFocused ? COLORS.primary : COLORS.textSecondary} style={styles.searchIcon} />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Search exercises..."
                 placeholderTextColor={COLORS.textMuted}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
               />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearSearchBtn}>
+                  <Plus size={16} color={COLORS.textSecondary} style={{ transform: [{ rotate: '45deg' }] }} />
+                </TouchableOpacity>
+              )}
             </View>
 
             {/* Category horizontal badges */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
               {CATEGORIES.map((cat) => {
                 const isSelected = selectedCategory === cat;
+                const badgeColor = getExerciseColor(cat);
                 return (
                   <TouchableOpacity
                     key={cat}
                     onPress={() => setSelectedCategory(cat)}
                     style={[
                       styles.categoryBadge,
-                      isSelected && styles.categoryBadgeActive,
+                      isSelected ? {
+                        backgroundColor: `${badgeColor}18`,
+                        borderColor: badgeColor,
+                        shadowColor: badgeColor,
+                        shadowOpacity: 0.3,
+                        shadowRadius: 6,
+                        shadowOffset: { width: 0, height: 4 },
+                        elevation: 4,
+                      } : {
+                        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                        borderColor: 'rgba(255, 255, 255, 0.06)',
+                      },
                     ]}
                   >
-                    <Text style={[styles.categoryText, isSelected && styles.categoryTextActive]}>
+                    <Text style={[
+                      styles.categoryText,
+                      isSelected && { color: badgeColor, fontWeight: '800' }
+                    ]}>
                       {cat}
                     </Text>
                   </TouchableOpacity>
@@ -149,8 +293,15 @@ export default function Workouts() {
             {/* Exercises List */}
             {filteredExercises.map((ex) => {
               const isExpanded = expandedExerciseId === ex.id;
+              const accentColor = getExerciseColor(ex.category);
               return (
-                <View key={ex.id} style={styles.exerciseCardWrapper}>
+                <View 
+                  key={ex.id} 
+                  style={[
+                    styles.exerciseCardWrapper,
+                    { borderLeftWidth: 4, borderLeftColor: accentColor }
+                  ]}
+                >
                   <TouchableOpacity
                     activeOpacity={0.9}
                     onPress={() => toggleExpandExercise(ex.id)}
@@ -162,12 +313,17 @@ export default function Workouts() {
                     <View style={styles.exerciseCardInfo}>
                       <Text style={styles.exerciseName}>{ex.name}</Text>
                       <View style={styles.badgeRow}>
-                        <View style={[styles.tag, styles.muscleTag]}>
-                          <Text style={styles.muscleTagText}>{ex.category}</Text>
+                        <View style={[styles.tag, { backgroundColor: `${accentColor}10`, marginRight: 6 }]}>
+                          <Text style={[styles.tagText, { color: accentColor, fontWeight: '700' }]}>{ex.category}</Text>
                         </View>
-                        <View style={styles.tag}>
-                          <Text style={styles.tagText}>{ex.equipment}</Text>
-                        </View>
+                        {(() => {
+                          const equipStyle = getEquipmentTagStyle(ex.equipment);
+                          return (
+                            <View style={[styles.tag, { backgroundColor: equipStyle.bg }]}>
+                              <Text style={[styles.tagText, { color: equipStyle.text }]}>{ex.equipment}</Text>
+                            </View>
+                          );
+                        })()}
                       </View>
                     </View>
                     {isExpanded ? (
@@ -179,9 +335,22 @@ export default function Workouts() {
                   
                   {isExpanded && (
                     <View style={styles.exerciseCardBody}>
+                      <Text style={[styles.instructionsTitle, { color: accentColor }]}>How to Perform</Text>
                       <View style={styles.instructionBox}>
-                        <Info size={16} color={COLORS.primary} style={styles.infoIcon} />
-                        <Text style={styles.instructionsText}>{ex.instructions}</Text>
+                        <View style={{ width: '100%' }}>
+                          {ex.instructions.split('. ').map((step, stepIdx) => {
+                            if (!step.trim()) return null;
+                            const formattedStep = step.endsWith('.') ? step : `${step}.`;
+                            return (
+                              <View key={stepIdx} style={styles.stepRow}>
+                                <View style={[styles.stepNumberContainer, { backgroundColor: `${accentColor}15` }]}>
+                                  <Text style={[styles.stepNumberText, { color: accentColor }]}>{stepIdx + 1}</Text>
+                                </View>
+                                <Text style={styles.stepText}>{formattedStep}</Text>
+                              </View>
+                            );
+                          })}
+                        </View>
                       </View>
                     </View>
                   )}
@@ -209,12 +378,12 @@ const styles = StyleSheet.create({
   },
   headerTabs: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderRadius: 14,
-    padding: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderRadius: 16,
+    padding: 3,
     marginHorizontal: 20,
     marginTop: 16,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.05)',
     marginBottom: 8,
   },
@@ -222,11 +391,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
-    borderRadius: 11,
+    borderRadius: 13,
   },
   tabButtonActive: {
     backgroundColor: COLORS.card,
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
@@ -242,7 +413,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 110,
+    paddingBottom: 120,
   },
   routinesTab: {
     width: '100%',
@@ -274,7 +445,7 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontSize: 16,
     fontWeight: '700',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   tagRow: {
     flexDirection: 'row',
@@ -282,25 +453,19 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   tag: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: SIZES.radius_sm,
-    marginRight: 6,
+    marginRight: 8,
     marginBottom: 4,
   },
   tagText: {
     color: COLORS.textSecondary,
     fontSize: 11,
     fontWeight: '600',
-  },
-  muscleTag: {
-    backgroundColor: 'rgba(139, 92, 246, 0.1)',
-  },
-  muscleTagText: {
-    color: COLORS.primary,
-    fontSize: 11,
-    fontWeight: '700',
   },
   lastPerformedText: {
     color: COLORS.textMuted,
@@ -317,16 +482,43 @@ const styles = StyleSheet.create({
   },
   previewTitle: {
     color: COLORS.text,
-    fontSize: 12,
-    fontWeight: '700',
-    marginBottom: 4,
+    fontSize: 11,
+    fontWeight: '800',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  previewList: {
+  previewExerciseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  previewExerciseText: {
     color: COLORS.textSecondary,
     fontSize: 12,
+    fontWeight: '500',
   },
-  startBtn: {
-    width: '100%',
+  startBtnContainer: {
+    borderRadius: SIZES.radius_md,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
+    marginTop: 4,
+  },
+  startBtnGradient: {
+    height: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  startBtnText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   exercisesTab: {
     width: '100%',
@@ -342,6 +534,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginBottom: 16,
   },
+  searchBarFocused: {
+    borderColor: COLORS.primary,
+    backgroundColor: 'rgba(139, 92, 246, 0.03)',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
   searchIcon: {
     marginRight: 8,
   },
@@ -350,6 +551,9 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontSize: 14,
     height: '100%',
+  },
+  clearSearchBtn: {
+    padding: 6,
   },
   categoryScroll: {
     marginBottom: 20,
@@ -363,17 +567,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  categoryBadgeActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
   categoryText: {
     color: COLORS.textSecondary,
     fontSize: 12,
     fontWeight: '700',
-  },
-  categoryTextActive: {
-    color: COLORS.white,
   },
   exerciseCardWrapper: {
     backgroundColor: COLORS.card,
@@ -396,6 +593,11 @@ const styles = StyleSheet.create({
   exerciseCardInfo: {
     flex: 1,
   },
+  exerciseName: {
+    color: COLORS.text,
+    fontSize: 15,
+    fontWeight: '700',
+  },
   badgeRow: {
     flexDirection: 'row',
     marginTop: 6,
@@ -405,16 +607,37 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   instructionBox: {
-    flexDirection: 'row',
     backgroundColor: COLORS.cardHeader,
     padding: 12,
     borderRadius: SIZES.radius_md,
   },
-  infoIcon: {
-    marginRight: 8,
-    marginTop: 1,
+  instructionsTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  instructionsText: {
+  stepRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginVertical: 6,
+    paddingRight: 8,
+  },
+  stepNumberContainer: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+    marginTop: 1.5,
+  },
+  stepNumberText: {
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  stepText: {
     flex: 1,
     color: COLORS.textSecondary,
     fontSize: 12,
@@ -430,5 +653,64 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 12,
     textAlign: 'center',
+  },
+  createCardWrapper: {
+    marginBottom: 20,
+    borderRadius: SIZES.radius_lg,
+    overflow: 'hidden',
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  createCardGradient: {
+    padding: 1.5,
+    borderRadius: SIZES.radius_lg,
+  },
+  createCardInner: {
+    backgroundColor: 'rgba(21, 30, 46, 0.95)',
+    borderRadius: SIZES.radius_lg - 1.5,
+    padding: 16,
+  },
+  createCard: {
+    backgroundColor: 'rgba(139, 92, 246, 0.04)',
+    borderRadius: SIZES.radius_lg,
+    borderWidth: 1.5,
+    borderColor: 'rgba(139, 92, 246, 0.18)',
+    borderStyle: 'dashed',
+    padding: 16,
+    marginBottom: 20,
+  },
+  createCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  createIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+    shadowColor: COLORS.accentPink,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  createTextContainer: {
+    flex: 1,
+  },
+  createCardTitle: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  createCardDesc: {
+    color: COLORS.textSecondary,
+    fontSize: 11,
+    marginTop: 2,
   },
 });

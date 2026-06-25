@@ -6,7 +6,7 @@ import { COLORS, SIZES, SPACING } from '../constants/theme';
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'success' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   loading?: boolean;
@@ -35,8 +35,13 @@ export default function Button({
     isOutline && styles.outlineButton,
     isGhost && styles.ghostButton,
     disabled && styles.disabledButton,
+    variant === 'primary' && !disabled && styles.primaryShadow,
+    variant === 'success' && !disabled && styles.successShadow,
     style,
   ] as ViewStyle[];
+
+  const flattenedStyle = StyleSheet.flatten(style);
+  const borderRadius = flattenedStyle?.borderRadius ?? styles.button.borderRadius;
 
   const textStyles = [
     styles.text,
@@ -64,11 +69,11 @@ export default function Button({
         onPress={onPress}
         disabled={disabled || loading}
         activeOpacity={0.8}
-        style={[buttonStyle, styles.primaryShadow]}
+        style={buttonStyle}
       >
         <LinearGradient
           colors={COLORS.primaryGradient}
-          style={styles.gradient}
+          style={[styles.gradient, { borderRadius }]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
         >
@@ -88,7 +93,27 @@ export default function Button({
       >
         <LinearGradient
           colors={COLORS.secondaryGradient}
-          style={styles.gradient}
+          style={[styles.gradient, { borderRadius }]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        >
+          {content}
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  }
+
+  if (variant === 'success' && !disabled) {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={disabled || loading}
+        activeOpacity={0.8}
+        style={buttonStyle}
+      >
+        <LinearGradient
+          colors={COLORS.successGradient}
+          style={[styles.gradient, { borderRadius }]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
         >
@@ -180,6 +205,13 @@ const styles = StyleSheet.create({
   },
   primaryShadow: {
     shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  successShadow: {
+    shadowColor: COLORS.success,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 10,

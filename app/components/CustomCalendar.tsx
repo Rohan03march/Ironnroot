@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS, SIZES, SPACING } from '../constants/theme';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface CustomCalendarProps {
   onDateSelect: (dateStr: string) => void;
@@ -100,26 +101,41 @@ export default function CustomCalendar({
           const hasWorkout = workoutDates.includes(dateStr);
           const isToday = formatDateStr(new Date()) === dateStr;
 
+          const dayContent = (
+            <Text
+              style={[
+                styles.dayText,
+                isSelected && styles.selectedDayText,
+                hasWorkout && !isSelected && styles.workoutDayText,
+                isToday && !isSelected && styles.todayDayText,
+              ]}
+            >
+              {date.getDate()}
+            </Text>
+          );
+
           return (
             <TouchableOpacity
               key={dateStr}
               onPress={() => onDateSelect(dateStr)}
               style={[
                 styles.daySlot,
-                isSelected && styles.selectedDaySlot,
                 isToday && !isSelected && styles.todayDaySlot,
               ]}
+              activeOpacity={0.8}
             >
-              <Text
-                style={[
-                  styles.dayText,
-                  isSelected && styles.selectedDayText,
-                  hasWorkout && !isSelected && styles.workoutDayText,
-                  isToday && !isSelected && styles.todayDayText,
-                ]}
-              >
-                {date.getDate()}
-              </Text>
+              {isSelected ? (
+                <LinearGradient
+                  colors={COLORS.primaryGradient}
+                  style={styles.selectedDayGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  {dayContent}
+                </LinearGradient>
+              ) : (
+                dayContent
+              )}
               
               {/* Workout indicator dot */}
               {hasWorkout && (
@@ -140,11 +156,16 @@ export default function CustomCalendar({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.card,
+    backgroundColor: 'rgba(21, 30, 46, 0.9)',
     borderRadius: SIZES.radius_lg,
     padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
   },
   header: {
     flexDirection: 'row',
@@ -154,17 +175,22 @@ const styles = StyleSheet.create({
   },
   monthText: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
     color: COLORS.text,
   },
   navigation: {
     flexDirection: 'row',
   },
   navButton: {
-    padding: 6,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginLeft: 8,
-    borderRadius: SIZES.radius_sm,
-    backgroundColor: COLORS.cardHeader,
   },
   weekRow: {
     flexDirection: 'row',
@@ -175,7 +201,7 @@ const styles = StyleSheet.create({
     width: '14.28%',
     textAlign: 'center',
     color: COLORS.textMuted,
-    fontWeight: '600',
+    fontWeight: '700',
     fontSize: 12,
   },
   grid: {
@@ -188,42 +214,56 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 6,
-    borderRadius: SIZES.radius_md,
+    borderRadius: 17,
     position: 'relative',
   },
-  selectedDaySlot: {
-    backgroundColor: COLORS.primary,
+  selectedDayGradient: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 4,
   },
   todayDaySlot: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: COLORS.primary,
+    backgroundColor: 'rgba(139, 92, 246, 0.08)',
   },
   dayText: {
     color: COLORS.text,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   selectedDayText: {
     color: COLORS.white,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   workoutDayText: {
     color: COLORS.accentCyan,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   todayDayText: {
     color: COLORS.primary,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   workoutDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
     position: 'absolute',
-    bottom: 6,
+    bottom: 3,
   },
   normalWorkoutDot: {
     backgroundColor: COLORS.accentCyan,
+    shadowColor: COLORS.accentCyan,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 2,
   },
   selectedWorkoutDot: {
     backgroundColor: COLORS.white,
