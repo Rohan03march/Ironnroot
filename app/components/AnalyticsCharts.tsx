@@ -1,8 +1,13 @@
-import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import Svg, { Rect, Circle, Path, Defs, LinearGradient, Stop, Line, Text as SvgText, G } from 'react-native-svg';
 import { COLORS, SIZES, SPACING } from '../constants/theme';
 import { WorkoutLog, BodyMetric } from '../constants/mockData';
+
+// Enable LayoutAnimation for Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CHART_WIDTH = SCREEN_WIDTH - 64; // Adjusting for card padding
@@ -306,6 +311,13 @@ export function MuscleSplitDonutChart({ logs }: MuscleSplitProps) {
     totalSets = 48;
   }
 
+  const [selectedCat, setSelectedCat] = useState<string | null>(null);
+
+  const handleSelectCat = (category: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setSelectedCat(prev => prev === category ? null : category);
+  };
+
   const COLORS_MAP: Record<string, string> = {
     Chest: '#8B5CF6',      // Violet
     Back: '#00F2FE',       // Cyan
@@ -315,8 +327,8 @@ export function MuscleSplitDonutChart({ logs }: MuscleSplitProps) {
     Core: '#3B82F6',       // Blue
   };
 
-  const donutSize = 100;
-  const strokeWidth = 14;
+  const donutSize = 110;
+  const strokeWidth = 16;
   const radius = (donutSize - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
 
@@ -339,52 +351,128 @@ export function MuscleSplitDonutChart({ logs }: MuscleSplitProps) {
       };
     });
 
+  // Determine displayed number and label in the center
+  const displayNum = selectedCat ? categories[selectedCat] : totalSets;
+  const displayLabel = selectedCat ? `${selectedCat}` : 'TOTAL SETS';
+
+  const svgHeight = 180;
+  const cx = CHART_WIDTH / 2;
+  const cy = svgHeight / 2;
+
   return (
-    <View style={[styles.chartContainer, styles.donutRow]}>
-      <View style={styles.donutContainer}>
-        <Svg width={donutSize} height={donutSize}>
-          {segments.map((seg, idx) => (
-            <Circle
-              key={`donut-seg-${idx}`}
-              cx={donutSize / 2}
-              cy={donutSize / 2}
-              r={radius}
-              stroke={seg.color}
-              strokeWidth={strokeWidth}
-              strokeDasharray={circumference}
-              strokeDashoffset={seg.strokeOffset}
-              fill="transparent"
-              transform={`rotate(${seg.rotateAngle - 90} ${donutSize / 2} ${donutSize / 2})`}
-            />
-          ))}
-          {/* Centered label */}
+    <View style={styles.chartContainer}>
+      {/* Tap anywhere on donut container to reset filter */}
+      <TouchableOpacity 
+        activeOpacity={0.9} 
+        onPress={() => setSelectedCat(null)}
+        style={[styles.donutContainer, { width: CHART_WIDTH, height: svgHeight }]}
+      >
+        <Svg width={CHART_WIDTH} height={svgHeight}>
+          {/* Background Ring for Premium Track look */}
           <Circle
-            cx={donutSize / 2}
-            cy={donutSize / 2}
+            cx={cx}
+            cy={cy}
+            r={radius}
+            stroke="rgba(255, 255, 255, 0.03)"
+            strokeWidth={strokeWidth}
+            fill="transparent"
+          />
+          {segments.map((seg, idx) => {
+            const isDimmed = selectedCat !== null && selectedCat !== seg.category;
+            return (
+              <Circle
+                key={`donut-seg-${idx}`}
+                cx={cx}
+                cy={cy}
+                r={radius}
+                stroke={seg.color}
+                strokeWidth={strokeWidth}
+                strokeDasharray={circumference}
+                strokeDashoffset={seg.strokeOffset}
+                strokeOpacity={isDimmed ? 0.15 : 1}
+                fill="transparent"
+                transform={`rotate(${seg.rotateAngle - 90} ${cx} ${cy})`}
+              />
+            );
+          })}
+          {/* Center inner mask circle */}
+          <Circle
+            cx={cx}
+            cy={cy}
             r={radius - strokeWidth / 2 - 2}
             fill={COLORS.card}
           />
-        </Svg>
-        <View style={styles.donutCenterContent}>
-          <Text style={styles.donutCenterNum}>{totalSets}</Text>
-          <Text style={styles.donutCenterLabel}>SETS</Text>
-        </View>
-      </View>
 
-      <View style={styles.legendContainer}>
+          {/* Segment outer text labels */}
+          {segments.map((seg, idx) => {
+            const isDimmed = selectedCat !== null && selectedCat !== seg.category;
+            if (isDimmed) return null;
+            
+            const midAngle = seg.rotateAngle + (seg.percentage * 360) / 2 - 90;
+            const rad = (midAngle * Math.PI) / 180;
+            
+            const labelRadius = radius + strokeWidth / 2 + 12;
+            const lx = cx + labelRadius * Math.cos(rad);
+            const ly = cy + labelRadius * Math.sin(rad) + 3; // vertical centering adjustment
+            
+            const textAnchor = Math.cos(rad) > 0.15 ? 'start' : Math.cos(rad) < -0.15 ? 'end' : 'middle';
+            
+            return (
+              <SvgText
+                key={`label-${idx}`}
+                x={lx}
+                y={ly}
+                fill={seg.color}
+                fontSize={10}
+                fontWeight="800"
+                textAnchor={textAnchor}
+              >
+                {seg.category}
+              </SvgText>
+            );
+          })}
+        </Svg>
+        
+        {/* Center label content */}
+        <View style={[styles.donutCenterContent, { left: cx - 45, top: cy - 25, width: 90, height: 50 }]}>
+          <Text style={styles.donutCenterNum}>{displayNum}</Text>
+          <Text style={styles.donutCenterLabel} numberOfLines={1}>{displayLabel}</Text>
+        </View>
+      </TouchableOpacity>
+
+      <View style={styles.fullWidthLegendContainer}>
         <Text style={styles.legendHeader}>Target Split</Text>
         <View style={styles.legendGrid}>
-          {segments.map((seg, idx) => (
-            <View key={`legend-${idx}`} style={styles.legendItem}>
-              <View style={[styles.legendIndicator, { backgroundColor: seg.color }]} />
-              <Text style={styles.legendName} numberOfLines={1}>
-                {seg.category}
-              </Text>
-              <Text style={styles.legendPct}>
-                {Math.round(seg.percentage * 100)}%
-              </Text>
-            </View>
-          ))}
+          {segments.map((seg, idx) => {
+            const isSelected = selectedCat === seg.category;
+            const isAnySelected = selectedCat !== null;
+            const opacity = isAnySelected && !isSelected ? 0.45 : 1;
+            
+            return (
+              <TouchableOpacity
+                key={`legend-${idx}`}
+                activeOpacity={0.7}
+                onPress={() => handleSelectCat(seg.category)}
+                style={[
+                  styles.legendItem, 
+                  isSelected && styles.legendItemActive,
+                  { opacity }
+                ]}
+              >
+                <View style={styles.legendItemLeft}>
+                  <View style={[styles.legendIndicator, { backgroundColor: seg.color }]} />
+                  <Text style={[styles.legendName, isSelected && styles.legendNameActive]} numberOfLines={1}>
+                    {seg.category}
+                  </Text>
+                </View>
+                <View style={[styles.pctBadge, { backgroundColor: isSelected ? seg.color : `${seg.color}15` }]}>
+                  <Text style={[styles.legendPct, { color: isSelected ? COLORS.white : seg.color }]}>
+                    {Math.round(seg.percentage * 100)}%
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
     </View>
@@ -408,14 +496,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   donutRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
+    justifyContent: 'center',
   },
   donutContainer: {
-    width: 100,
-    height: 100,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -426,25 +510,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   donutCenterNum: {
-    color: COLORS.text,
-    fontSize: 18,
-    fontWeight: '700',
+    color: COLORS.white,
+    fontSize: 24,
+    fontWeight: '800',
   },
   donutCenterLabel: {
-    color: COLORS.textSecondary,
+    color: COLORS.textMuted,
     fontSize: 8,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    marginTop: 2,
+    textTransform: 'uppercase',
+    maxWidth: 90,
+    textAlign: 'center',
   },
-  legendContainer: {
-    flex: 1,
-    marginLeft: 20,
+  fullWidthLegendContainer: {
+    width: '100%',
+    marginTop: 16,
+    paddingHorizontal: 8,
   },
   legendHeader: {
     color: COLORS.text,
-    fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 8,
+    fontSize: 11,
+    fontWeight: '800',
+    marginBottom: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -456,24 +545,51 @@ const styles = StyleSheet.create({
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     width: '48%',
-    marginBottom: 6,
+    marginBottom: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  legendItemActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  legendItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 4,
   },
   legendIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 4,
+    height: 12,
+    borderRadius: 2,
     marginRight: 6,
   },
   legendName: {
     color: COLORS.textSecondary,
     fontSize: 11,
+    fontWeight: '600',
     flex: 1,
   },
+  legendNameActive: {
+    color: COLORS.white,
+    fontWeight: '700',
+  },
+  pctBadge: {
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   legendPct: {
-    color: COLORS.text,
-    fontSize: 11,
-    fontWeight: '600',
-    marginLeft: 4,
+    fontSize: 9,
+    fontWeight: '700',
   },
 });

@@ -15,6 +15,7 @@ export default function CalendarScreen() {
   // Local states for metrics inputs
   const [inputWeight, setInputWeight] = useState('');
   const [inputBodyFat, setInputBodyFat] = useState('');
+  const [focusedInput, setFocusedInput] = useState<'weight' | 'bodyFat' | null>(null);
   
   // Track logged metrics dynamically
   const [metricsLogs, setMetricsLogs] = useState(BODY_METRICS);
@@ -106,7 +107,9 @@ export default function CalendarScreen() {
 
         {dayWorkouts.length === 0 && (
           <Card style={styles.restDayCard}>
-            <Heart size={24} color={COLORS.primary} style={{ marginBottom: 8 }} />
+            <View style={styles.restDayIconCircle}>
+              <Heart size={24} color={COLORS.accentPink} fill={COLORS.accentPink} />
+            </View>
             <Text style={styles.restDayTitle}>Rest & Recovery Day</Text>
             <Text style={styles.restDayText}>
               No workouts logged. Give your muscles time to rebuild and synthesize protein.
@@ -144,30 +147,40 @@ export default function CalendarScreen() {
             <View style={styles.inputBox}>
               <Text style={styles.inputLabel}>Weight (kg)</Text>
               <TextInput
-                style={styles.metricInput}
+                style={[
+                  styles.metricInput,
+                  focusedInput === 'weight' && styles.metricInputWeightFocused
+                ]}
                 placeholder={dayMetric ? dayMetric.weight.toString() : '75.0'}
                 placeholderTextColor={COLORS.textMuted}
                 keyboardType="numeric"
                 value={inputWeight}
                 onChangeText={setInputWeight}
+                onFocus={() => setFocusedInput('weight')}
+                onBlur={() => setFocusedInput(null)}
               />
             </View>
             <View style={styles.inputBox}>
               <Text style={styles.inputLabel}>Body Fat (%)</Text>
               <TextInput
-                style={styles.metricInput}
+                style={[
+                  styles.metricInput,
+                  focusedInput === 'bodyFat' && styles.metricInputBodyFatFocused
+                ]}
                 placeholder={dayMetric?.bodyFat ? dayMetric.bodyFat.toString() : '15.0'}
                 placeholderTextColor={COLORS.textMuted}
                 keyboardType="numeric"
                 value={inputBodyFat}
                 onChangeText={setInputBodyFat}
+                onFocus={() => setFocusedInput('bodyFat')}
+                onBlur={() => setFocusedInput(null)}
               />
             </View>
           </View>
           <Button
             title="Log Measurement"
             onPress={handleSaveMetrics}
-            variant="outline"
+            variant="primary"
             size="sm"
             style={styles.saveMetricsBtn}
           />
@@ -251,15 +264,29 @@ const styles = StyleSheet.create({
   restDayCard: {
     alignItems: 'center',
     padding: 20,
-    borderStyle: 'dashed',
     borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: 'transparent',
+    borderColor: 'rgba(236, 72, 153, 0.18)',
+    backgroundColor: 'rgba(236, 72, 153, 0.04)',
+    borderRadius: SIZES.radius_lg,
+  },
+  restDayIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(236, 72, 153, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+    shadowColor: COLORS.accentPink,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 2,
   },
   restDayTitle: {
-    color: COLORS.text,
+    color: COLORS.white,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
     marginBottom: 4,
   },
   restDayText: {
@@ -326,6 +353,24 @@ const styles = StyleSheet.create({
     height: 40,
     paddingHorizontal: 12,
     fontSize: 14,
+  },
+  metricInputWeightFocused: {
+    borderColor: COLORS.accentCyan,
+    backgroundColor: 'rgba(6, 182, 212, 0.03)',
+    shadowColor: COLORS.accentCyan,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  metricInputBodyFatFocused: {
+    borderColor: COLORS.accentPink,
+    backgroundColor: 'rgba(236, 72, 153, 0.03)',
+    shadowColor: COLORS.accentPink,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
   },
   saveMetricsBtn: {
     width: '100%',
