@@ -419,7 +419,7 @@ export default function ActiveWorkout() {
                     <Text style={[styles.colHeader, styles.colNum]}>Set</Text>
                     <TouchableOpacity
                       onPress={handleSelectWeightUnit}
-                      style={[styles.colHeader, styles.colInput, { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
+                      style={[styles.colInput, { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
                       activeOpacity={0.7}
                     >
                       <Text style={styles.colHeader}>Weight ({isKgMode ? 'kg' : 'lb'})</Text>
@@ -427,7 +427,7 @@ export default function ActiveWorkout() {
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={handleSelectRepsMode}
-                      style={[styles.colHeader, styles.colInput, { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
+                      style={[styles.colInput, { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
                       activeOpacity={0.7}
                     >
                       <Text style={styles.colHeader}>{repsMode === 'reps' ? 'Reps' : 'Reps Range'}</Text>
@@ -435,6 +435,7 @@ export default function ActiveWorkout() {
                     </TouchableOpacity>
                     <Text style={[styles.colHeader, styles.colCheck]}></Text>
                   </View>
+
 
                   {ex.sets.map((set, setIdx) => {
                     const rowStyle = [

@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { View, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SIZES } from '../constants/theme';
 
 interface CardProps {
   children: React.ReactNode;
-  style?: ViewStyle;
-  gradientColors?: readonly string[];
+  style?: StyleProp<ViewStyle>;
+  gradientColors?: readonly [string, string, ...string[]];
 }
 
 export default function Card({ children, style, gradientColors }: CardProps) {
