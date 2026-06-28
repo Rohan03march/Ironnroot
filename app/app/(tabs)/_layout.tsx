@@ -14,7 +14,8 @@ export default function TabLayout() {
       tabBar={(props) => <CustomTabBar {...props} />}
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
-      <Tabs.Screen name="workouts" options={{ title: 'Workouts' }} />
+      <Tabs.Screen name="routines" options={{ title: 'Routines' }} />
+      <Tabs.Screen name="workouts" options={{ href: null }} />
       <Tabs.Screen name="calendar" options={{ title: 'History' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
       <Tabs.Screen name="analytics" options={{ href: null }} />
@@ -26,10 +27,10 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   const insets = useSafeAreaInsets();
   
   // Calculate bottom offset for floating layout
-  const bottomOffset = Platform.OS === 'ios' ? Math.max(insets.bottom, 16) : 16;
+  const bottomOffset = Platform.OS === 'ios' ? Math.max(insets.bottom, 16) : 20;
 
-  // Filter routes to strictly show Home (index), Workouts, Calendar (History), and Profile
-  const ALLOWED_TABS = ['index', 'workouts', 'calendar', 'profile'];
+  // Filter routes to strictly show Home (index), Routines, Calendar (History), and Profile
+  const ALLOWED_TABS = ['index', 'routines', 'calendar', 'profile'];
   const visibleRoutes = state.routes.filter((route: any) => ALLOWED_TABS.includes(route.name));
 
   return (
@@ -55,7 +56,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
             switch (route.name) {
               case 'index':
                 return <Home size={size} color={color} />;
-              case 'workouts':
+              case 'routines':
                 return <Dumbbell size={size} color={color} />;
               case 'calendar':
                 return <Calendar size={size} color={color} />;
@@ -66,8 +67,8 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
             }
           };
 
-          const activeColor = COLORS.primary;
-          const inactiveColor = COLORS.textSecondary;
+          const activeColor = '#A78BFA'; // Brighter violet for high accessibility and premium glow
+          const inactiveColor = 'rgba(255, 255, 255, 0.45)'; // Soft white/grey
           const iconColor = isFocused ? activeColor : inactiveColor;
 
           return (
@@ -81,8 +82,11 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
               style={styles.tabItem}
               activeOpacity={0.7}
             >
-              <View style={styles.iconWrapper}>
-                {getIcon(iconColor, 24)}
+              <View style={[
+                styles.iconWrapper,
+                isFocused && styles.iconWrapperActive
+              ]}>
+                {getIcon(iconColor, 20)}
               </View>
             </TouchableOpacity>
           );
@@ -95,37 +99,45 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 const styles = StyleSheet.create({
   tabBarContainer: {
     position: 'absolute',
-    left: 20,
-    right: 20,
+    left: 0,
+    right: 0,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(21, 30, 46, 0.95)', // Translucent glassmorphic slate navy
-    borderRadius: 24,
+    backgroundColor: 'rgba(15, 23, 42, 0.94)', // Sleek slate dark background
+    borderRadius: 28,
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.08)',
-    paddingVertical: 14,
-    width: '100%',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    width: 310, // Floating centered dock layout for 4 items
     justifyContent: 'space-around',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.45,
+    shadowRadius: 16,
+    elevation: 12,
   },
   tabItem: {
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
+    paddingVertical: 4,
   },
   iconWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: 32,
-    width: 32,
+    height: 40,
+    width: 56,
+    borderRadius: 20,
+    backgroundColor: 'transparent',
+  },
+  iconWrapperActive: {
+    backgroundColor: 'rgba(139, 92, 246, 0.12)', // Premium glowing background pill
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.25)',
   },
 });

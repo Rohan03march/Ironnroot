@@ -50,7 +50,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-type TabType = 'stats' | 'measures' | 'workouts' | 'settings';
+type TabType = 'stats' | 'measures' | 'settings';
 
 export default function Profile() {
   const router = useRouter();
@@ -82,8 +82,7 @@ export default function Profile() {
   // Workout Logs state
   const [workoutLogs, setWorkoutLogs] = useState<WorkoutLog[]>(WORKOUT_LOGS);
 
-  // Expanded Workouts state (for accordion)
-  const [expandedWorkouts, setExpandedWorkouts] = useState<Record<string, boolean>>({});
+
 
   // Input Focus tracking for premium borders
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
@@ -194,13 +193,7 @@ export default function Profile() {
     );
   };
 
-  const toggleWorkoutDetails = (id: string) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedWorkouts(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
-  };
+
 
   const handleResetData = () => {
     Alert.alert(
@@ -280,14 +273,6 @@ export default function Profile() {
           >
             <Scale size={18} color={activeTab === 'measures' ? COLORS.primary : COLORS.textSecondary} />
             <Text style={[styles.tabText, activeTab === 'measures' && styles.tabTextActive]}>Measures</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.tabButton, activeTab === 'workouts' && styles.tabActive]}
-            onPress={() => setActiveTab('workouts')}
-          >
-            <Dumbbell size={18} color={activeTab === 'workouts' ? COLORS.primary : COLORS.textSecondary} />
-            <Text style={[styles.tabText, activeTab === 'workouts' && styles.tabTextActive]}>Workouts</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -554,77 +539,7 @@ export default function Profile() {
           </View>
         )}
 
-        {/* 3. WORKOUTS TAB */}
-        {activeTab === 'workouts' && (
-          <View>
-            <Text style={styles.sectionTitle}>Workout History</Text>
-            {workoutLogs.length === 0 ? (
-              <Card style={styles.emptyCard}>
-                <Text style={styles.emptyText}>No completed workout logs found.</Text>
-              </Card>
-            ) : (
-              workoutLogs.map((log) => {
-                const isExpanded = !!expandedWorkouts[log.id];
-                return (
-                  <Card key={log.id} style={styles.workoutLogCard}>
-                    <TouchableOpacity
-                      activeOpacity={0.9}
-                      onPress={() => toggleWorkoutDetails(log.id)}
-                    >
-                      <View style={styles.workoutHeaderRow}>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.workoutLogName}>{log.name}</Text>
-                          <Text style={styles.workoutLogDate}>{log.date}</Text>
-                        </View>
-                        {isExpanded ? (
-                          <ChevronUp size={18} color={COLORS.textSecondary} />
-                        ) : (
-                          <ChevronDown size={18} color={COLORS.textSecondary} />
-                        )}
-                      </View>
 
-                      <View style={styles.workoutStatsRow}>
-                        <View style={styles.workoutStatPill}>
-                          <Clock size={10} color={COLORS.primary} style={{ marginRight: 4 }} />
-                          <Text style={styles.workoutStatLabel}>Duration: </Text>
-                          <Text style={styles.workoutStatVal}>{log.durationMin}m</Text>
-                        </View>
-                        <View style={styles.workoutStatPill}>
-                          <Scale size={10} color={COLORS.accentCyan} style={{ marginRight: 4 }} />
-                          <Text style={styles.workoutStatLabel}>Volume: </Text>
-                          <Text style={styles.workoutStatVal}>{log.totalVolumeKg}kg</Text>
-                        </View>
-                        <View style={styles.workoutStatPill}>
-                          <Dumbbell size={10} color={COLORS.accentPink} style={{ marginRight: 4 }} />
-                          <Text style={styles.workoutStatLabel}>Exercises: </Text>
-                          <Text style={styles.workoutStatVal}>{log.exercises.length}</Text>
-                        </View>
-                      </View>
-                    </TouchableOpacity>
-
-                    {isExpanded && (
-                      <View style={styles.workoutDetailsBody}>
-                        <View style={styles.workoutDivider} />
-                        <Text style={styles.workoutExercisesTitle}>Exercises Logged:</Text>
-                        {log.exercises.map((ex, idx) => (
-                          <View key={idx} style={styles.workoutExerciseRow}>
-                            <View style={styles.exInfoLeft}>
-                              <Dumbbell size={12} color={COLORS.primary} style={{ marginRight: 6 }} />
-                              <Text style={styles.workoutExName} numberOfLines={1}>{ex.exerciseName}</Text>
-                            </View>
-                            <Text style={styles.workoutExDetails}>
-                              {ex.setsCount} sets • <Text style={styles.workoutBestSetText}>Best: {ex.bestSet}</Text>
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
-                    )}
-                  </Card>
-                );
-              })
-            )}
-          </View>
-        )}
 
         {/* 4. SETTINGS TAB */}
         {activeTab === 'settings' && (

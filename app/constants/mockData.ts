@@ -418,3 +418,10 @@ export const DEFAULT_USER: UserProfile = {
   streakDays: 5,
   lastWorkoutDate: '2026-06-24'
 };
+
+// 6. User Custom Templates Store
+export const CUSTOM_TEMPLATES: WorkoutTemplate[] = [];
+
+export const addCustomTemplate = (template: WorkoutTemplate) => {
+  CUSTOM_TEMPLATES.push(template);
+};

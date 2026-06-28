@@ -3,18 +3,12 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, SIZES, SPACING } from '../../constants/theme';
-import Card from '../../components/Card';
-import Button from '../../components/Button';
-import CircularProgress from '../../components/CircularProgress';
-import { DEFAULT_TEMPLATES, WORKOUT_LOGS, DEFAULT_USER } from '../../constants/mockData';
-import { Flame, Play, Clock, Dumbbell, Award, Plus } from 'lucide-react-native';
+import { COLORS, SIZES } from '../../constants/theme';
+import { DEFAULT_USER } from '../../constants/mockData';
+import { Flame, Dumbbell, Plus } from 'lucide-react-native';
 
 export default function Dashboard() {
   const router = useRouter();
-
-  // Find recent logs
-  const recentLogs = WORKOUT_LOGS.slice(0, 2);
 
   const handleStartWorkout = (templateId?: string) => {
     if (templateId) {
@@ -39,150 +33,51 @@ export default function Dashboard() {
           </View>
         </View>
 
-        {/* Daily Summary Glass Card with Gradient Border Wrapper */}
-        <View style={styles.todayCardWrapper}>
-          <LinearGradient
-            colors={['#8B5CF6', '#06B6D4']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.todayCardGradient}
-          >
-            <View style={styles.todayCardInner}>
-              <View style={styles.todayContent}>
-                <View style={styles.todayLeft}>
-                  <Text style={styles.todayHeader}>TODAY'S TARGET</Text>
-                  <Text style={styles.todayTitle}>Muscle Rebuild</Text>
-                  <Text style={styles.todayGoalText}>Complete 12 working sets to keep the momentum going!</Text>
-                  
-                  <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={() => handleStartWorkout('temp-legs')}
-                    style={styles.quickStartChip}
-                  >
-                    <Play size={10} color={COLORS.success} fill={COLORS.success} />
-                    <Text style={styles.quickStartChipText}>Up next: Leg Day</Text>
-                  </TouchableOpacity>
-                </View>
-                <CircularProgress
-                  size={100}
-                  strokeWidth={8}
-                  progress={8 / 12}
-                  label="8 / 12"
-                  subLabel="SETS DONE"
-                />
-              </View>
-            </View>
-          </LinearGradient>
-        </View>
-
-        {/* Stats Row with top borders and glowing shadows */}
-        <View style={styles.statsRow}>
-          <Card style={[styles.statCard, styles.statCardTime]}>
-            <Clock size={18} color={COLORS.accentCyan} />
-            <Text style={styles.statValue}>188m</Text>
-            <Text style={styles.statLabel}>Lifting Time</Text>
-          </Card>
-
-          <Card style={[styles.statCard, styles.statCardVolume]}>
-            <Dumbbell size={18} color={COLORS.primary} />
-            <Text style={styles.statValue}>7,360 kg</Text>
-            <Text style={styles.statLabel}>Total Volume</Text>
-          </Card>
-
-          <Card style={[styles.statCard, styles.statCardWorkouts]}>
-            <Award size={18} color={COLORS.success} />
-            <Text style={styles.statValue}>3</Text>
-            <Text style={styles.statLabel}>Workouts</Text>
-          </Card>
-        </View>
-
-        {/* Start Empty Workout Button */}
-        <Button
-          title="Start Empty Workout"
-          onPress={() => handleStartWorkout()}
-          variant="primary"
-          icon={<Plus size={18} color={COLORS.white} />}
-          style={styles.emptyWorkoutBtn}
-        />
-
-        {/* Templates Header */}
+        {/* Routines Section */}
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>Workout Routines</Text>
-          <TouchableOpacity onPress={() => router.push('/workouts')}>
-            <Text style={styles.sectionLink}>View All</Text>
+          <Text style={styles.sectionTitle}>Routines</Text>
+        </View>
+
+        {/* New Routine and Explore Routine Actions */}
+        <View style={styles.routinesRow}>
+          <TouchableOpacity
+            style={styles.routineActionCard}
+            onPress={() => router.push('/create-routine')}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['rgba(139, 92, 246, 0.18)', 'rgba(236, 72, 153, 0.06)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.routineActionGradient}
+            >
+              <View style={[styles.routineActionIconContainer, { borderColor: 'rgba(236, 72, 153, 0.2)' }]}>
+                <Plus size={18} color={COLORS.accentPink} />
+              </View>
+              <Text style={styles.routineActionTitle}>New Routine</Text>
+              <Text style={styles.routineActionDesc}>Design custom routine</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.routineActionCard}
+            onPress={() => router.push('/explore-exercises')}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['rgba(6, 182, 212, 0.18)', 'rgba(59, 130, 246, 0.06)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.routineActionGradient}
+            >
+              <View style={[styles.routineActionIconContainer, { borderColor: 'rgba(6, 182, 212, 0.2)' }]}>
+                <Dumbbell size={16} color={COLORS.accentCyan} />
+              </View>
+              <Text style={styles.routineActionTitle}>Explore Exercises</Text>
+              <Text style={styles.routineActionDesc}>Browse database</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
-
-        {/* Templates horizontal list with left accent borders and glowing drop shadows */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.templatesScroll}>
-          {DEFAULT_TEMPLATES.map((t) => {
-            const borderThemeColor = t.id === 'temp-push' ? '#8B5CF6' : t.id === 'temp-pull' ? '#00F2FE' : '#10B981';
-            return (
-              <Card 
-                key={t.id} 
-                style={[
-                  styles.templateCard, 
-                  { 
-                    borderLeftWidth: 3, 
-                    borderLeftColor: borderThemeColor,
-                    shadowColor: borderThemeColor,
-                    shadowOpacity: 0.15,
-                    shadowRadius: 6,
-                    shadowOffset: { width: 0, height: 4 },
-                  }
-                ]}
-              >
-                <Text style={styles.templateName} numberOfLines={1}>{t.name}</Text>
-                <Text style={styles.templateMeta}>
-                  {t.exercisesCount} Exercises • {t.durationMin} mins
-                </Text>
-                <Button
-                  title="Start Routine"
-                  onPress={() => handleStartWorkout(t.id)}
-                  size="sm"
-                  variant="outline"
-                  style={[styles.templateBtn, { borderColor: borderThemeColor }]}
-                  textStyle={{ color: borderThemeColor, fontSize: 11 }}
-                />
-              </Card>
-            );
-          })}
-        </ScrollView>
-
-        {/* Recent Activity */}
-        <Text style={styles.sectionTitle}>Recent Logs</Text>
-        {recentLogs.map((log) => {
-          const logBorderColor = log.name.toLowerCase().includes('legs') 
-            ? '#10B981' 
-            : log.name.toLowerCase().includes('pull') 
-              ? '#00F2FE' 
-              : '#8B5CF6';
-          return (
-            <Card 
-              key={log.id} 
-              style={[
-                styles.logCard, 
-                { borderLeftWidth: 3, borderLeftColor: logBorderColor }
-              ]}
-            >
-              <View style={styles.logHeader}>
-                <View>
-                  <Text style={styles.logName}>{log.name}</Text>
-                  <Text style={styles.logMeta}>
-                    {log.date} • {log.durationMin} mins • Volume: {log.totalVolumeKg}kg
-                  </Text>
-                </View>
-                <Dumbbell size={16} color={logBorderColor} />
-              </View>
-              <View style={styles.logDivider} />
-              {log.exercises.slice(0, 2).map((ex, idx) => (
-                <Text key={idx} style={styles.logExerciseItem}>
-                  • {ex.exerciseName} ({ex.setsCount} sets • Best: {ex.bestSet})
-                </Text>
-              ))}
-            </Card>
-          );
-        })}
       </ScrollView>
     </SafeAreaView>
   );
@@ -236,116 +131,49 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
-  todayCardWrapper: {
-    marginBottom: 20,
-    borderRadius: SIZES.radius_lg,
-    overflow: 'hidden',
-    shadowColor: '#8B5CF6',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  todayCardGradient: {
-    padding: 1.5,
-    borderRadius: SIZES.radius_lg,
-  },
-  todayCardInner: {
-    backgroundColor: 'rgba(21, 30, 46, 0.95)',
-    borderRadius: SIZES.radius_lg - 1.5,
-    padding: 18,
-  },
-  todayCard: {
-    marginBottom: 20,
-    padding: 20,
-  },
-  todayContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  todayLeft: {
-    flex: 1,
-    paddingRight: 12,
-  },
-  todayHeader: {
-    color: '#8B5CF6',
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1.5,
-    marginBottom: 4,
-  },
-  todayTitle: {
-    color: COLORS.white,
-    fontSize: 20,
-    fontWeight: '800',
-    marginBottom: 6,
-  },
-  todayGoalText: {
-    color: COLORS.textSecondary,
-    fontSize: 12,
-    lineHeight: 18,
-    marginBottom: 12,
-  },
-  quickStartChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(16, 185, 129, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.15)',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: SIZES.radius_md,
-    alignSelf: 'flex-start',
-  },
-  quickStartChipText: {
-    color: COLORS.success,
-    fontSize: 11,
-    fontWeight: '800',
-    marginLeft: 6,
-  },
-  statsRow: {
+  routinesRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 20,
-    marginHorizontal: -4,
+    marginHorizontal: -6,
   },
-  statCard: {
+  routineActionCard: {
     flex: 1,
-    marginHorizontal: 4,
-    alignItems: 'center',
-    paddingVertical: 14,
-    backgroundColor: COLORS.card,
+    marginHorizontal: 6,
+    borderRadius: SIZES.radius_lg,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.04)',
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: COLORS.card,
   },
-  statCardTime: {
-    borderTopWidth: 3,
-    borderTopColor: COLORS.accentCyan,
+  routineActionGradient: {
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 125,
   },
-  statCardVolume: {
-    borderTopWidth: 3,
-    borderTopColor: COLORS.primary,
+  routineActionIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+    borderWidth: 1.5,
   },
-  statCardWorkouts: {
-    borderTopWidth: 3,
-    borderTopColor: COLORS.success,
-  },
-  statValue: {
-    color: COLORS.text,
-    fontSize: 15,
+  routineActionTitle: {
+    color: COLORS.white,
+    fontSize: 13,
     fontWeight: '800',
-    marginTop: 8,
-    marginBottom: 2,
+    marginBottom: 3,
   },
-  statLabel: {
+  routineActionDesc: {
     color: COLORS.textSecondary,
     fontSize: 10,
     fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
-  emptyWorkoutBtn: {
-    marginBottom: 24,
+    textAlign: 'center',
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -360,65 +188,32 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
-  sectionLink: {
-    color: COLORS.primary,
-    fontSize: 12,
-    fontWeight: '700',
+  startEmptyCard: {
+    borderRadius: SIZES.radius_lg,
+    overflow: 'hidden',
+    marginBottom: 16,
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  templatesScroll: {
-    marginBottom: 24,
+  startEmptyGradient: {
+    padding: 1.5,
+    borderRadius: SIZES.radius_lg,
   },
-  templateCard: {
-    width: 175,
-    marginRight: 12,
-    padding: 14,
-    height: 130,
-    justifyContent: 'space-between',
-    backgroundColor: COLORS.card,
-  },
-  templateName: {
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  templateMeta: {
-    color: COLORS.textSecondary,
-    fontSize: 11,
-    marginTop: 4,
-    marginBottom: 10,
-  },
-  templateBtn: {
-    height: 30,
-    borderRadius: SIZES.radius_sm,
-  },
-  logCard: {
-    marginBottom: 12,
-    padding: 14,
-    backgroundColor: COLORS.card,
-  },
-  logHeader: {
+  startEmptyInner: {
+    backgroundColor: 'rgba(21, 30, 46, 0.95)',
+    borderRadius: SIZES.radius_lg - 1.5,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
   },
-  logName: {
-    color: COLORS.text,
+  startEmptyText: {
+    color: COLORS.white,
     fontSize: 14,
-    fontWeight: '700',
-  },
-  logMeta: {
-    color: COLORS.textSecondary,
-    fontSize: 11,
-    marginTop: 2,
-  },
-  logDivider: {
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    marginVertical: 10,
-  },
-  logExerciseItem: {
-    color: COLORS.textSecondary,
-    fontSize: 11,
-    lineHeight: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 });

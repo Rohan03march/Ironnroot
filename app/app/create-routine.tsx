@@ -1,24 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, Alert, Dimensions, Image } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { COLORS, SIZES, SPACING } from '../constants/theme';
+import { useRouter } from 'expo-router';
+import { COLORS, SIZES } from '../constants/theme';
 import Card from '../components/Card';
 import Button from '../components/Button';
-import RestTimer from '../components/RestTimer';
 import { LinearGradient } from 'expo-linear-gradient';
-import { EXERCISES, DEFAULT_TEMPLATES, WorkoutExercise, SetLog, Exercise } from '../constants/mockData';
-import { Clock, Plus, Trash2, Check, X, Search, ChevronRight, Dumbbell, ChevronDown, Edit2 } from 'lucide-react-native';
+import { EXERCISES, WorkoutExercise, SetLog, Exercise, addCustomTemplate } from '../constants/mockData';
+import { Plus, Trash2, Check, X, Search, ChevronRight, Dumbbell, ChevronDown, Edit2 } from 'lucide-react-native';
 
 const CATEGORY_COLORS: Record<string, string> = {
-  // Broad categories
   Chest: '#8B5CF6',
   Back: '#00F2FE',
   Legs: '#10B981',
   Shoulders: '#F59E0B',
   Arms: '#EC4899',
   Core: '#3B82F6',
-  // Specific muscles
   'Upper Chest': '#A78BFA',
   'Lower Chest': '#7C3AED',
   Traps: '#06B6D4',
@@ -61,9 +58,8 @@ const getExerciseColor = (category: string) => {
 const { width: windowWidth } = Dimensions.get('window');
 const cardWidth = windowWidth - 32;
 
-export default function ActiveWorkout() {
+export default function CreateRoutine() {
   const router = useRouter();
-  const { templateId } = useLocalSearchParams<{ templateId?: string }>();
   const insets = useSafeAreaInsets();
   const scrollViewRefs = useRef<Record<string, any>>({});
   const titleInputRef = useRef<TextInput>(null);
@@ -73,16 +69,11 @@ export default function ActiveWorkout() {
   // Focus state for title editing
   const [isTitleFocused, setIsTitleFocused] = useState(false);
 
-  // Timer States
-  const [seconds, setSeconds] = useState(0);
-
-  // Workout State
-  const [workoutName, setWorkoutName] = useState('Empty Workout');
+  // Routine State
+  const [routineName, setRoutineName] = useState('Custom Routine');
   const [activeExercises, setActiveExercises] = useState<WorkoutExercise[]>([]);
 
   // Modals / Rest timer triggers
-  const [restTimerVisible, setRestTimerVisible] = useState(false);
-  const [restDuration, setRestDuration] = useState(90);
   const [exerciseModalVisible, setExerciseModalVisible] = useState(false);
   const [tempSelectedIds, setTempSelectedIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -93,19 +84,12 @@ export default function ActiveWorkout() {
 
   const EQUIPMENT_OPTIONS = ['Barbell', 'Dumbbell', 'Kettlebell', 'Machine', 'Cable', 'Bodyweight', 'Plate', 'Resistance Band', 'Suspension Band', 'Others'];
   const MUSCLE_OPTIONS = [
-    // Chest
     'Chest', 'Upper Chest', 'Lower Chest',
-    // Back
     'Back', 'Lats', 'Traps', 'Rhomboids', 'Lower Back',
-    // Shoulders
     'Shoulders', 'Front Delts', 'Side Delts', 'Rear Delts',
-    // Arms
     'Biceps', 'Triceps', 'Forearms',
-    // Legs
-    'Quads', 'Hamstrings', 'Glutes', 'Calves', 'Adductors', 'Abductors',
-    // Core
+    'Legs', 'Quads', 'Hamstrings', 'Glutes', 'Calves', 'Adductors', 'Abductors',
     'Abs', 'Obliques', 'Hip Flexors',
-    // Other
     'Full Body', 'Cardio',
   ];
 
@@ -136,48 +120,9 @@ export default function ActiveWorkout() {
     );
   };
 
-  // Finished success splash
+  // Created success splash
   const [showSuccessSplash, setShowSuccessSplash] = useState(false);
-  const [summaryStats, setSummaryStats] = useState({ duration: '', volume: 0, sets: 0 });
-
-  // Initialize workout based on template or empty
-  useEffect(() => {
-    if (templateId) {
-      const template = DEFAULT_TEMPLATES.find((t) => t.id === templateId);
-      if (template) {
-        setWorkoutName(template.name);
-
-        // Deep clone template exercises to keep state local
-        const clonedExercises = template.exercises.map((ex) => ({
-          ...ex,
-          sets: ex.sets.map((s) => ({ ...s, completed: false })),
-        }));
-
-        setActiveExercises(clonedExercises);
-      }
-    } else {
-      setWorkoutName('Custom Session');
-    }
-  }, [templateId]);
-
-  // Session timer hook
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setSeconds((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatTimer = (totalSeconds: number) => {
-    const hrs = Math.floor(totalSeconds / 3600);
-    const mins = Math.floor((totalSeconds % 3600) / 60);
-    const secs = totalSeconds % 60;
-
-    if (hrs > 0) {
-      return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  const [summaryStats, setSummaryStats] = useState({ sets: 0 });
 
   // Set management
   const handleUpdateSet = (exerciseIndex: number, setIndex: number, field: keyof SetLog, value: any) => {
@@ -193,15 +138,6 @@ export default function ActiveWorkout() {
       }
     } else if (field === 'reps') {
       targetSet.reps = value as any;
-    } else if (field === 'completed') {
-      const nextVal = !targetSet.completed;
-      targetSet.completed = nextVal;
-
-      // Trigger rest timer when a set is completed
-      if (nextVal) {
-        setRestDuration(90); // default rest duration
-        setRestTimerVisible(true);
-      }
     }
     setActiveExercises(updated);
   };
@@ -227,7 +163,6 @@ export default function ActiveWorkout() {
     const updated = [...activeExercises];
     updated[exerciseIndex].sets.splice(setIndex, 1);
 
-    // If no sets remaining, optionally delete exercise or keep empty list
     if (updated[exerciseIndex].sets.length === 0) {
       updated.splice(exerciseIndex, 1);
     }
@@ -275,54 +210,26 @@ export default function ActiveWorkout() {
     setSearchQuery('');
   };
 
-  const handleCancelWorkout = () => {
+  const handleCancelRoutine = () => {
     Alert.alert(
-      'Cancel Workout',
-      'Are you sure you want to discard this workout? All progress will be lost.',
+      'Cancel Routine',
+      'Are you sure you want to discard this routine? All changes will be lost.',
       [
-        { text: 'Keep Tracking', style: 'cancel' },
-        { text: 'Discard Workout', style: 'destructive', onPress: () => router.back() },
+        { text: 'Keep Editing', style: 'cancel' },
+        { text: 'Discard Routine', style: 'destructive', onPress: () => router.back() },
       ]
     );
   };
 
-  const handleFinishWorkout = () => {
+  const handleFinishRoutine = () => {
     if (activeExercises.length === 0) {
-      Alert.alert('Empty Workout', 'Add at least one exercise to log your workout.');
+      Alert.alert('Empty Routine', 'Add at least one exercise to save your routine.');
       return;
     }
 
-    // Calculate Summary stats
-    let totalVolume = 0;
-    let totalSets = 0;
-
-    activeExercises.forEach((ex) => {
-      ex.sets.forEach((set) => {
-        if (set.completed) {
-          const repsStr = set.reps ? set.reps.toString() : '';
-          let repsNum = 0;
-          if (repsStr.includes('-')) {
-            const parts = repsStr.split('-');
-            const min = parseInt(parts[0]) || 0;
-            const max = parseInt(parts[1]) || 0;
-            repsNum = min > 0 ? min : (max > 0 ? max : 0);
-          } else {
-            repsNum = parseInt(repsStr) || 0;
-          }
-          totalVolume += set.weight * repsNum;
-          totalSets += 1;
-        }
-      });
-    });
-
-    if (totalSets === 0) {
-      Alert.alert('No Sets Logged', 'Complete and check at least one set to finish.');
-      return;
-    }
+    const totalSets = activeExercises.reduce((acc, ex) => acc + ex.sets.length, 0);
 
     setSummaryStats({
-      duration: formatTimer(seconds),
-      volume: totalVolume,
       sets: totalSets,
     });
 
@@ -330,8 +237,21 @@ export default function ActiveWorkout() {
   };
 
   const handleFinishConfirm = () => {
+    // Construct new WorkoutTemplate
+    const newTemplate = {
+      id: `custom-routine-${Date.now()}`,
+      name: routineName || 'Custom Routine',
+      durationMin: activeExercises.length * 10, // Estimate 10 mins per exercise
+      exercisesCount: activeExercises.length,
+      exercises: activeExercises,
+      createdAt: new Date().toISOString().split('T')[0] // Format: YYYY-MM-DD
+    };
+
+    // Save to global storage
+    addCustomTemplate(newTemplate);
+
     setShowSuccessSplash(false);
-    router.replace('/(tabs)');
+    router.replace('/(tabs)/routines');
   };
 
   // Filter exercises in selection modal
@@ -346,19 +266,19 @@ export default function ActiveWorkout() {
     <SafeAreaView style={styles.safeArea}>
       {/* Top Navigation Bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={handleCancelWorkout} style={styles.iconBtn}>
+        <TouchableOpacity onPress={handleCancelRoutine} style={styles.iconBtn}>
           <X size={20} color={COLORS.textSecondary} />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
-          <Text style={styles.headerTitleText}>Log Workout</Text>
+          <Text style={styles.headerTitleText}>Create Routine</Text>
         </View>
-        <TouchableOpacity onPress={handleFinishWorkout} style={styles.headerFinishBtn} activeOpacity={0.7}>
-          <Text style={styles.headerFinishBtnText}>Save</Text>
+        <TouchableOpacity onPress={handleFinishRoutine} style={styles.headerFinishBtn} activeOpacity={0.7}>
+          <Text style={styles.headerFinishBtnText}>Create</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Session Header (Editable Title & Live Timer) */}
+        {/* Session Header (Editable Title) */}
         <View style={styles.sessionHeader}>
           <View style={styles.sessionTitleRow}>
             <TextInput
@@ -367,9 +287,9 @@ export default function ActiveWorkout() {
                 styles.sessionTitleInput,
                 isTitleFocused && styles.sessionTitleInputFocused
               ]}
-              value={workoutName}
-              onChangeText={setWorkoutName}
-              placeholder="Workout Name"
+              value={routineName}
+              onChangeText={setRoutineName}
+              placeholder="Routine Name"
               placeholderTextColor={COLORS.textMuted}
               selectTextOnFocus
               maxLength={25}
@@ -382,11 +302,8 @@ export default function ActiveWorkout() {
               </TouchableOpacity>
             )}
           </View>
-          <View style={styles.sessionTimerContainer}>
-            <Clock size={13} color={COLORS.textSecondary} style={{ marginRight: 6 }} />
-            <Text style={styles.sessionTimerText}>{formatTimer(seconds)}</Text>
-          </View>
         </View>
+
         {activeExercises.length === 0 ? (
           <View style={styles.emptyContainer}>
             <View style={styles.glowSphere} />
@@ -401,9 +318,9 @@ export default function ActiveWorkout() {
                   <View style={styles.emptyIconContainer}>
                     <Dumbbell size={32} color={COLORS.primary} />
                   </View>
-                  <Text style={styles.emptyTitle}>Custom Workout Session</Text>
+                  <Text style={styles.emptyTitle}>Custom Workout Routine</Text>
                   <Text style={styles.emptyDesc}>
-                    Design your session dynamically. Add exercises from the database, customize sets, reps, and track your lifting metrics in real time.
+                    Design your new routine. Add exercises, define target sets and reps, and save it as a template for future workouts.
                   </Text>
                   <TouchableOpacity
                     activeOpacity={0.75}
@@ -474,14 +391,11 @@ export default function ActiveWorkout() {
                       <Text style={styles.colHeader}>{repsMode === 'reps' ? 'Reps' : 'Reps Range'}</Text>
                       <ChevronDown size={10} color={COLORS.textSecondary} style={{ marginLeft: 3 }} />
                     </TouchableOpacity>
-                    <Text style={[styles.colHeader, styles.colCheck]}></Text>
                   </View>
-
 
                   {ex.sets.map((set, setIdx) => {
                     const rowStyle = [
                       styles.setRow,
-                      set.completed && styles.setRowCompleted,
                     ];
 
                     const isWeightFocused = focusedInput?.exIdx === exIdx && focusedInput?.setIdx === setIdx && focusedInput?.field === 'weight';
@@ -523,7 +437,6 @@ export default function ActiveWorkout() {
                             <TextInput
                               style={[
                                 styles.tableInput,
-                                set.completed && styles.tableInputCompleted,
                                 isWeightFocused && {
                                   borderColor: accentColor,
                                   backgroundColor: 'rgba(255, 255, 255, 0.03)',
@@ -549,7 +462,6 @@ export default function ActiveWorkout() {
                               onChangeText={(val) => handleUpdateSet(exIdx, setIdx, 'weight', val)}
                               placeholder="0"
                               placeholderTextColor={COLORS.textMuted}
-                              editable={!set.completed}
                               onFocus={() => setFocusedInput({ exIdx, setIdx, field: 'weight' })}
                               onBlur={() => setFocusedInput(null)}
                             />
@@ -567,7 +479,6 @@ export default function ActiveWorkout() {
                               <TextInput
                                 style={[
                                   styles.tableInput,
-                                  set.completed && styles.tableInputCompleted,
                                   isRepsFocused && {
                                     borderColor: accentColor,
                                     backgroundColor: 'rgba(255, 255, 255, 0.03)',
@@ -583,7 +494,6 @@ export default function ActiveWorkout() {
                                 onChangeText={(val) => handleUpdateSet(exIdx, setIdx, 'reps', val)}
                                 placeholder="0"
                                 placeholderTextColor={COLORS.textMuted}
-                                editable={!set.completed}
                                 onFocus={() => setFocusedInput({ exIdx, setIdx, field: 'reps' })}
                                 onBlur={() => setFocusedInput(null)}
                               />
@@ -592,7 +502,6 @@ export default function ActiveWorkout() {
                                 <TextInput
                                   style={[
                                     styles.tableInputRange,
-                                    set.completed && styles.tableInputCompleted,
                                     isMinRepsFocused && {
                                       borderColor: accentColor,
                                       backgroundColor: 'rgba(255, 255, 255, 0.03)',
@@ -612,7 +521,6 @@ export default function ActiveWorkout() {
                                   }}
                                   placeholder="Min"
                                   placeholderTextColor={COLORS.textMuted}
-                                  editable={!set.completed}
                                   onFocus={() => setFocusedInput({ exIdx, setIdx, field: 'minReps' })}
                                   onBlur={() => setFocusedInput(null)}
                                 />
@@ -620,7 +528,6 @@ export default function ActiveWorkout() {
                                 <TextInput
                                   style={[
                                     styles.tableInputRange,
-                                    set.completed && styles.tableInputCompleted,
                                     isMaxRepsFocused && {
                                       borderColor: accentColor,
                                       backgroundColor: 'rgba(255, 255, 255, 0.03)',
@@ -642,7 +549,6 @@ export default function ActiveWorkout() {
                                   }}
                                   placeholder="Max"
                                   placeholderTextColor={COLORS.textMuted}
-                                  editable={!set.completed}
                                   onFocus={() => setFocusedInput({ exIdx, setIdx, field: 'maxReps' })}
                                   onBlur={() => setFocusedInput(null)}
                                 />
@@ -653,23 +559,6 @@ export default function ActiveWorkout() {
                                 spacer
                               </Text>
                             )}
-                          </View>
-
-                          <View style={styles.colCheck}>
-                            <TouchableOpacity
-                              onPress={() => handleUpdateSet(exIdx, setIdx, 'completed', null)}
-                              style={[
-                                styles.checkContainer,
-                                set.completed ? styles.checkContainerCompleted : styles.checkContainerPending
-                              ]}
-                              activeOpacity={0.8}
-                            >
-                              <Check
-                                size={13}
-                                color={set.completed ? COLORS.white : 'rgba(255, 255, 255, 0.45)'}
-                                strokeWidth={3.5}
-                              />
-                            </TouchableOpacity>
                           </View>
                         </View>
 
@@ -707,13 +596,6 @@ export default function ActiveWorkout() {
           </>
         )}
       </ScrollView>
-
-      {/* Rest Timer Modal */}
-      <RestTimer
-        visible={restTimerVisible}
-        initialSeconds={restDuration}
-        onClose={() => setRestTimerVisible(false)}
-      />
 
       {/* Add Exercise Modal selection */}
       <Modal
@@ -857,7 +739,7 @@ export default function ActiveWorkout() {
             </View>
           )}
 
-          {/* Filter Bottom Sheet — inline absolute overlay inside this modal */}
+          {/* Filter Bottom Sheet */}
           {filterSheetType !== null && (
             <View style={styles.sheetOverlay}>
               <TouchableOpacity
@@ -884,8 +766,11 @@ export default function ActiveWorkout() {
                       <TouchableOpacity
                         key={option}
                         onPress={() => {
-                          if (isEquipment) setSelectedEquipment(isSelected ? null : option);
-                          else setSelectedMuscle(isSelected ? null : option);
+                          if (isEquipment) {
+                            setSelectedEquipment(selectedEquipment === option ? null : option);
+                          } else {
+                            setSelectedMuscle(selectedMuscle === option ? null : option);
+                          }
                           setFilterSheetType(null);
                         }}
                         style={[styles.sheetItem, isSelected && styles.sheetItemSelected]}
@@ -908,8 +793,6 @@ export default function ActiveWorkout() {
         </View>
       </Modal>
 
-
-
       <Modal
         visible={showSuccessSplash}
         animationType="fade"
@@ -921,21 +804,13 @@ export default function ActiveWorkout() {
             <View style={styles.successIconOuter}>
               <Check size={36} color={COLORS.white} />
             </View>
-            <Text style={styles.successTitle}>Workout Completed!</Text>
-            <Text style={styles.successSub}>Awesome job, Rohan! You killed it.</Text>
+            <Text style={styles.successTitle}>Routine Created!</Text>
+            <Text style={styles.successSub}>Your new routine has been saved successfully.</Text>
 
             <View style={styles.successStatsBox}>
               <View style={styles.successStat}>
-                <Text style={styles.successStatLabel}>Time</Text>
-                <Text style={styles.successStatVal}>{summaryStats.duration}</Text>
-              </View>
-              <View style={styles.successStat}>
-                <Text style={styles.successStatLabel}>Volume</Text>
-                <Text style={styles.successStatVal}>
-                  {isKgMode
-                    ? `${Math.round(summaryStats.volume)} kg`
-                    : `${Math.round(summaryStats.volume * 2.20462)} lb`}
-                </Text>
+                <Text style={styles.successStatLabel}>Exercises</Text>
+                <Text style={styles.successStatVal}>{activeExercises.length}</Text>
               </View>
               <View style={styles.successStat}>
                 <Text style={styles.successStatLabel}>Sets</Text>
@@ -1005,16 +880,6 @@ const styles = StyleSheet.create({
   sessionTitleInputFocused: {
     borderBottomColor: COLORS.primary,
   },
-  sessionTimerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  sessionTimerText: {
-    color: COLORS.textSecondary,
-    fontSize: 13,
-    fontWeight: '600',
-  },
   headerFinishBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -1052,11 +917,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
   },
-  exerciseCat: {
-    color: COLORS.primary,
+  exerciseBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginTop: 6,
+  },
+  exerciseBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    marginTop: 2,
     textTransform: 'uppercase',
   },
   tableHeader: {
@@ -1084,11 +954,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
   },
-  colCheck: {
-    width: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   swipeRowContainer: {
     backgroundColor: COLORS.error,
     borderRadius: SIZES.radius_sm,
@@ -1102,15 +967,9 @@ const styles = StyleSheet.create({
     borderRadius: SIZES.radius_sm,
     backgroundColor: COLORS.card,
   },
-  setRowCompleted: {
-    backgroundColor: '#102622',
-  },
   cellText: {
     color: COLORS.text,
     fontSize: 13,
-  },
-  mutedCell: {
-    color: COLORS.textSecondary,
   },
   tableInput: {
     backgroundColor: COLORS.cardHeader,
@@ -1123,28 +982,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     borderWidth: 1,
     borderColor: COLORS.border,
-  },
-  tableInputCompleted: {
-    backgroundColor: 'transparent',
-    borderColor: 'transparent',
-    color: COLORS.textSecondary,
-    opacity: 0.8,
-  },
-  checkContainer: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1.5,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkContainerPending: {
-    borderColor: 'rgba(255, 255, 255, 0.45)',
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-  },
-  checkContainerCompleted: {
-    backgroundColor: COLORS.success,
-    borderColor: COLORS.success,
   },
   swipeDeleteContainer: {
     width: 64,
@@ -1181,20 +1018,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     marginHorizontal: 2,
-  },
-  unitTogglePill: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
-    marginLeft: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  unitToggleText: {
-    color: COLORS.primary,
-    fontSize: 10,
-    fontWeight: '700',
   },
   addSetRow: {
     flexDirection: 'row',
@@ -1254,81 +1077,67 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     shadowColor: '#8B5CF6',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 6,
   },
   emptyCardGradient: {
     padding: 1.5,
     borderRadius: SIZES.radius_lg,
   },
   emptyCardInner: {
-    backgroundColor: 'rgba(21, 30, 46, 0.95)',
+    backgroundColor: 'rgba(21, 30, 46, 0.96)',
     borderRadius: SIZES.radius_lg - 1.5,
-    paddingVertical: 32,
-    paddingHorizontal: 20,
+    padding: 24,
     alignItems: 'center',
   },
   emptyIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(139, 92, 246, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
-    shadowColor: '#8B5CF6',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1.5,
+    borderColor: 'rgba(139, 92, 246, 0.2)',
   },
   emptyTitle: {
     color: COLORS.white,
     fontSize: 18,
     fontWeight: '800',
     marginBottom: 8,
+    textAlign: 'center',
   },
   emptyDesc: {
     color: COLORS.textSecondary,
     fontSize: 12,
     lineHeight: 18,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   emptyAddBtn: {
-    width: '80%',
-    borderRadius: 24,
-  },
-  exerciseBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-    marginTop: 6,
-    overflow: 'hidden',
-  },
-  exerciseBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    paddingHorizontal: 24,
+    height: 42,
+    borderRadius: 21,
   },
   modalContainer: {
     flex: 1,
     backgroundColor: COLORS.background,
+    paddingHorizontal: 16,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+    marginBottom: 12,
   },
   modalTitle: {
     color: COLORS.text,
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '800',
   },
   modalSearch: {
@@ -1336,41 +1145,103 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.card,
     borderRadius: SIZES.radius_md,
-    margin: 16,
-    paddingHorizontal: 12,
-    height: 44,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: COLORS.border,
+    paddingHorizontal: 12,
+    height: 46,
+    marginBottom: 12,
   },
   modalSearchFocused: {
     borderColor: COLORS.primary,
-    backgroundColor: 'rgba(139, 92, 246, 0.03)',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 3,
   },
   modalSearchInput: {
     flex: 1,
     color: COLORS.text,
     fontSize: 14,
+    fontWeight: '600',
+  },
+  filterPillRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    flexWrap: 'wrap',
+  },
+  filterPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    marginBottom: 6,
+  },
+  filterPillActive: {
+    borderColor: 'rgba(139, 92, 246, 0.4)',
+    backgroundColor: 'rgba(139, 92, 246, 0.06)',
+  },
+  filterPillText: {
+    color: COLORS.textSecondary,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  filterPillTextActive: {
+    color: COLORS.primary,
+  },
+  filterClearBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  filterClearText: {
+    color: COLORS.textSecondary,
+    fontSize: 11,
+    fontWeight: '700',
   },
   modalList: {
-    paddingHorizontal: 16,
+    paddingBottom: 24,
   },
   modalListItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: COLORS.card,
+    borderRadius: SIZES.radius_md,
+    paddingHorizontal: 14,
     paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.03)',
+  },
+  modalItemName: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  modalBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  modalBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  modalItemSub: {
+    color: COLORS.textMuted,
+    fontSize: 10,
+    fontWeight: '600',
   },
   modalListItemSelected: {
+    borderColor: 'rgba(139, 92, 246, 0.4)',
     backgroundColor: 'rgba(139, 92, 246, 0.04)',
   },
   modalListItemAdded: {
     opacity: 0.6,
+    backgroundColor: 'rgba(255, 255, 255, 0.01)',
   },
   modalItemImage: {
     width: 48,
@@ -1443,102 +1314,32 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.3,
   },
-  modalItemName: {
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  modalItemSub: {
-    color: COLORS.textSecondary,
-    fontSize: 11,
-  },
-  modalBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginRight: 4,
-    overflow: 'hidden',
-  },
-  modalBadgeText: {
-    fontSize: 9,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-  },
-  // Filter pill buttons
-  filterPillRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    gap: 8,
-  },
-  filterPill: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.card,
-  },
-  filterPillActive: {
-    backgroundColor: 'rgba(139, 92, 246, 0.12)',
-    borderColor: COLORS.primary,
-  },
-  filterPillText: {
-    color: COLORS.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  filterPillTextActive: {
-    color: COLORS.primary,
-    fontWeight: '700',
-  },
-  filterClearBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    backgroundColor: 'rgba(255,255,255,0.04)',
-  },
-  filterClearText: {
-    color: COLORS.textMuted,
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  // Bottom Sheet (Dropup) styles
   sheetOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    flexDirection: 'column',
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(5, 7, 12, 0.65)',
-    zIndex: 99,
+    zIndex: 1000,
   },
   sheetBackdrop: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   sheetContainer: {
     backgroundColor: COLORS.card,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 12,
+    borderTopLeftRadius: SIZES.radius_lg,
+    borderTopRightRadius: SIZES.radius_lg,
     paddingHorizontal: 16,
-    maxHeight: '60%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 12,
+    paddingTop: 8,
+    borderTopWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    maxHeight: '65%',
   },
   sheetHandle: {
     width: 36,
@@ -1546,99 +1347,103 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: 'rgba(255,255,255,0.15)',
     alignSelf: 'center',
-    marginBottom: 14,
+    marginBottom: 16,
   },
   sheetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    marginBottom: 16,
   },
   sheetTitle: {
     color: COLORS.text,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
   },
   sheetItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 4,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.04)',
+    borderBottomColor: 'rgba(255,255,255,0.02)',
   },
   sheetItemSelected: {
-    backgroundColor: 'rgba(139, 92, 246, 0.06)',
-    borderRadius: 10,
-    paddingHorizontal: 8,
+    backgroundColor: 'rgba(255,255,255,0.01)',
+  },
+  sheetDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 8,
   },
   sheetItemText: {
     color: COLORS.textSecondary,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
   sheetItemTextSelected: {
-    color: COLORS.text,
+    color: COLORS.white,
     fontWeight: '700',
-  },
-  sheetDot: {
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    marginRight: 10,
   },
   successOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(5, 7, 12, 0.94)',
+    backgroundColor: 'rgba(7, 10, 15, 0.85)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: 20,
   },
   successCard: {
     width: '100%',
-    maxWidth: 320,
+    maxWidth: 340,
+    backgroundColor: COLORS.card,
+    borderRadius: SIZES.radius_xl,
+    padding: 24,
     alignItems: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    shadowColor: COLORS.success,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,
   },
   successIconOuter: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: COLORS.success,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
     shadowColor: COLORS.success,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   successTitle: {
     color: COLORS.white,
     fontSize: 20,
     fontWeight: '800',
-    marginBottom: 6,
+    textAlign: 'center',
+    marginBottom: 8,
   },
   successSub: {
     color: COLORS.textSecondary,
-    fontSize: 13,
+    fontSize: 12,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
+    lineHeight: 18,
   },
   successStatsBox: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: SIZES.radius_lg,
     width: '100%',
-    backgroundColor: COLORS.cardHeader,
-    borderRadius: SIZES.radius_md,
     paddingVertical: 14,
-    paddingHorizontal: 12,
     marginBottom: 24,
   },
   successStat: {
@@ -1647,18 +1452,19 @@ const styles = StyleSheet.create({
   },
   successStatLabel: {
     color: COLORS.textMuted,
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: '700',
     textTransform: 'uppercase',
+    marginBottom: 4,
   },
   successStatVal: {
-    color: COLORS.text,
-    fontSize: 14,
+    color: COLORS.white,
+    fontSize: 16,
     fontWeight: '800',
-    marginTop: 4,
   },
   successBtn: {
     width: '100%',
-    borderRadius: 24,
+    height: 46,
+    borderRadius: 23,
   },
 });

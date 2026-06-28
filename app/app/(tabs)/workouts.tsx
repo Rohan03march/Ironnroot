@@ -142,7 +142,7 @@ export default function Workouts() {
               >
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  onPress={() => handleStartWorkout()}
+                  onPress={() => router.push('/create-routine')}
                   style={styles.createCardInner}
                 >
                   <View style={styles.createCardContent}>
@@ -150,8 +150,8 @@ export default function Workouts() {
                       <Plus size={20} color={COLORS.accentPink} />
                     </View>
                     <View style={styles.createTextContainer}>
-                      <Text style={styles.createCardTitle}>Create Custom Workout</Text>
-                      <Text style={styles.createCardDesc}>Start an empty routine and add exercises on the fly</Text>
+                      <Text style={styles.createCardTitle}>Create Custom Routine</Text>
+                      <Text style={styles.createCardDesc}>Design a routine template from scratch</Text>
                     </View>
                     <ChevronRight size={18} color={COLORS.textSecondary} />
                   </View>

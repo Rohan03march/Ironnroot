@@ -11,13 +11,16 @@ export default function RootLayout() {
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: COLORS.background },
-          animation: 'fade_from_bottom',
+          animation: 'slide_from_right',
         }}
       >
         <Stack.Screen name="index" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="active-workout" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="active-workout" />
+        <Stack.Screen name="create-routine" />
+        <Stack.Screen name="explore-exercises" />
+        <Stack.Screen name="exercise-detail" />
       </Stack>
     </>
   );
